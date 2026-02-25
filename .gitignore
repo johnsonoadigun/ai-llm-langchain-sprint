@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Env / secrets
+.env
+
+# Local outputs (keep if you want, but better not)
+outputs/
+data/docs/
+
+# Mac
+.DS_Store

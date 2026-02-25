@@ -1,0 +1,20 @@
+[
+  {
+    "id": "db_mention",
+    "question": "What databases are mentioned in the docs?",
+    "expect_any": ["postgresql", "mssql"],
+    "expect_sources_any": ["atf_notes.txt"]
+  },
+  {
+    "id": "atf_stack",
+    "question": "What technologies are mentioned in the ATF notes?",
+    "expect_any": ["ant", "jboss", "rest", "postgresql", "mssql"],
+    "expect_sources_any": ["atf_notes.txt"]
+  },
+  {
+    "id": "rag_benefit",
+    "question": "What is one benefit of RAG mentioned in the notes?",
+    "expect_any": ["reduces hallucinations", "retrieving relevant context"],
+    "expect_sources_any": ["llm_notes.txt"]
+  }
+]
