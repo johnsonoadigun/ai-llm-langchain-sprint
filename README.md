@@ -1,73 +1,178 @@
-# Local RAG System (Ollama + LangChain + pgvector + FastAPI)
+# Local RAG System (LangChain · Ollama · Postgres · FastAPI)
 
-A local Retrieval-Augmented Generation (RAG) application that:
-- ingests local text docs
-- chunks + embeds them
-- stores embeddings in Postgres (pgvector)
-- retrieves relevant context for a user query
-- generates a grounded answer using a local LLM (Ollama)
-- returns citations (source + snippet)
-- includes a lightweight evaluation runner that writes an eval report JSON
+A fully local Retrieval-Augmented Generation (RAG) service that ingests documents, generates embeddings, stores vectors in Postgres (pgvector), retrieves semantically relevant context, and produces grounded answers using a local LLM.
 
-This project is designed to demonstrate production-style LLM application engineering:
-**RAG pipeline + vector database + CLI + API + evaluation + artifacts**.
+The system includes:
+- CLI ingestion and query tools
+- FastAPI service with OpenAPI documentation
+- Vector persistence via Postgres + pgvector
+- Local LLM execution through Ollama
+- Lightweight evaluation with JSON artifact output
 
----
-
-## What This Proves (Hiring-Manager Friendly)
-- You can build an end-to-end RAG pipeline (ingest → embed → store → retrieve → answer)
-- You understand grounding + citations (reducing hallucinations)
-- You can ship both notebook/prototype AND a CLI + API (not “just a notebook”)
-- You can add evaluation + saved artifacts (`outputs/eval_report.json`)
+The entire pipeline runs locally without external hosted LLM dependencies.
 
 ---
 
-## Architecture (High Level)
+## Overview
 
-Docs → Chunking → Embeddings → pgvector (Postgres)
-User Question → Retrieval (Top-K) → Prompt with Context → Ollama LLM → Answer + Citations
+This project implements a complete RAG workflow:
 
-**Key components**
-- **LLM**: Ollama local model (e.g., `llama3.2:3b`)
-- **Embeddings**: Ollama embedding model (e.g., `nomic-embed-text`)
-- **Vector DB**: Postgres + pgvector
-- **Orchestration**: LangChain
-- **API**: FastAPI (OpenAPI docs at `/docs`)
-- **Eval**: Python runner saving JSON report
+1. Document ingestion  
+2. Text chunking  
+3. Embedding generation  
+4. Vector storage (pgvector)  
+5. Similarity retrieval (Top-K)  
+6. Context-augmented prompt construction  
+7. Grounded LLM response with citations  
+8. Evaluation reporting  
 
----
-
-## Repo Structure
-
-- `data/docs/`  
-  Example documents used for ingestion
-
-- `src/llm.py`  
-  LLM factory (Ollama base_url set to prevent connection issues)
-
-- `src/pg_rag_cli.py`  
-  CLI for ingest + ask
-
-- `src/api.py`  
-  FastAPI service: `/health`, `/ingest`, `/ask`
-
-- `src/pg_rag_eval.py`  
-  Evaluation runner writing `outputs/eval_report.json`
-
-- `outputs/`  
-  Generated artifacts (eval report, etc.)
+The focus is on production-oriented LLM application design rather than notebook experimentation.
 
 ---
 
-## How to Run (Local)
+## Architecture
 
-### Prereqs
-- Python venv: `.venv` (already set up)
-- Ollama running locally
-- Postgres running locally + pgvector enabled
-- API key set in `.env`
+Documents  
+→ Chunking  
+→ Embeddings (Ollama)  
+→ Postgres + pgvector  
+→ Top-K Retrieval  
+→ Prompt Construction  
+→ Local LLM (Ollama)  
+→ Answer + Citations  
 
-### 1) Start Ollama
-In one terminal tab:
-```bash
+---
+
+## Core Components
+
+- **LLM:** Ollama local model (e.g., `llama3.2:3b`)
+- **Embeddings:** Ollama embedding model (e.g., `nomic-embed-text`)
+- **Vector Store:** Postgres with pgvector extension
+- **Orchestration:** LangChain
+- **API Layer:** FastAPI (`/docs`)
+- **Evaluation:** Python runner generating structured JSON report
+
+---
+
+## Repository Structure
+data/docs/              Example documents for ingestion
+src/llm.py              LLM factory configuration
+src/pg_rag_cli.py       CLI (ingest / ask)
+src/api.py              FastAPI service
+src/pg_rag_eval.py      Evaluation runner
+outputs/                Evaluation artifacts
+
+---
+
+## Running the System Locally
+Prerequisites
+
+Python virtual environment (.venv)
+
+Ollama installed and running locally
+
+Postgres running locally
+
+pgvector extension enabled
+
+.env file with API key
+
+---
+
+## In a separate terminal:
+
 ollama serve
+
+---
+
+## Setup Postgres + pgvector (one-time)
+createdb ragdb
+psql -h localhost -p 5432 ragdb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+---
+
+## Create .env in project root:
+
+RAG_API_KEY=change-me-123
+
+---
+
+## Ingest Documents
+python -m src.pg_rag_cli ingest --recreate
+
+---
+
+## Run Evaluation
+python -m src.pg_rag_eval
+
+---
+
+## Run the API
+uvicorn src.api:app --reload --port 8000
+
+---
+
+## Open:
+
+http://127.0.0.1:8000/docs
+
+---
+
+## Example API Requests
+
+Health:
+
+curl -i http://127.0.0.1:8000/health
+
+---
+
+## Ask:
+
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: change-me-123" \
+  -d '{"question":"What databases are mentioned in the docs?","k":4}'
+
+---
+
+## ngest:
+
+curl -X POST http://127.0.0.1:8000/ingest \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: change-me-123" \
+  -d '{"recreate": true, "chunk_size": 250, "chunk_overlap": 40}'
+
+  ---
+
+  Design Considerations
+
+pgvector over FAISS
+Enables durable storage and aligns with enterprise database workflows.
+
+Local LLM execution
+Eliminates external API dependency and improves data privacy.
+
+Citations returned with answers
+Reduces hallucination and supports grounded responses.
+
+Evaluation runner included
+Encourages measurable iteration instead of blind prompt tuning.
+
+Potential Extensions
+
+Retrieval reranking
+
+Streaming LLM responses
+
+Structured JSON outputs
+
+Additional regression tests
+
+UI layer (e.g., Streamlit)
+
+Containerization (Docker)
+
+License
+
+MIT (or preferred license)
+
